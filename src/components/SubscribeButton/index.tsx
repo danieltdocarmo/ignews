@@ -3,13 +3,19 @@ import styles from './style.module.scss';
 
 import api from '../../service/api';
 import { getStripeJs } from '../../service/stripe-js';
+import { useRouter } from 'next/dist/client/router';
 
 export function SubscribeButton(){
     const [session] = useSession(); 
-    
+    const router = useRouter();
     async function handleSubscribe(){
         if(!session){
-            signIn();
+            signIn('github');
+            return;
+        }
+
+        if(session.activeSubscription){
+            router.push('/posts')
             return;
         }
 

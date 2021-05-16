@@ -20,6 +20,12 @@
     }
 }
 
+.preview{
+    background: linear-gradient(var(--gray-100), transparent);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .postContent{
     margin-top: 2rem;
     line-height: 2rem;
@@ -38,4 +44,25 @@
             margin: 0.5rem 0;
         }
     }
+}
+
+.continuosReading{
+    padding: 2rem;
+    text-align: center;
+    background: var(--gray-850);
+    border-radius: 100px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 4rem;
+    
+    a{
+        margin-left: 5px;
+        color: var(--yellow-500);
+
+
+        &:hover{
+            text-decoration: underline;
+        }
+    }
+
 }

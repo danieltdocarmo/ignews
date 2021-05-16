@@ -4,6 +4,7 @@ import Providers from 'next-auth/providers'
 import { query } from 'faunadb';
 
 import { fauna } from '../../../service/fauna';
+import { session } from 'next-auth/client';
 
 export default NextAuth({
   // Configure one or more authentication providers
@@ -18,82 +19,77 @@ export default NextAuth({
   callbacks: {
     async session(session) {
 
-      const ref = `Ref(Collection("users"), "297859138698871299")`;
-
-      const subscription = await fauna.query(
-        query.Get(
-          query.Match(
-          query.Index("subscription_by_user_ref"), ref)
-        )
-      )
-
-      console.log(subscription);
-      
-      return session;
-    },
-          //   try {
-      //     const userActiveSubscription = await fauna.query(
-      //       query.Get(
-      //         query.Intersection(
-      //           [query.Match(
-      //             query.Index('subscription_by_user_ref'),
-      //             query.Select("ref",
-      //               query.Get(query.Match(
-      //                 query.Index("user_by_email"),
-      //                 query.Casefold(session.user.email)
-      //               ))
-      //             )
-      //           ),
-      //           query.Match(query.Index('subscription_by_status'), "active")]
-      //         )
-      //       )
-      //     )
-
-      //     return {
-      //       ...session,
-      //       activeSubscription: userActiveSubscription
-      //     }
-      //   } catch {
-      //     return {
-      //       ...session,
-      //       activeSubscription: null
-      //     }
-      //   }
-      // },
-
-
-      async signIn(user, account, profile) {
-
-        const { email } = user;
-
-        try {
-          await fauna.query(
-            query.If(
-              query.Not(
-                query.Exists(
-                  query.Match(
-                    query.Index('user_by_email'),
-                    query.Casefold(user.email)
+      try {
+        const activeSubscription = await fauna.query(
+          query.Get(
+            query.Intersection([
+              query.Match(
+                query.Index('subscription_by_user_ref'),
+                query.Select("ref",
+                  query.Get(
+                    query.Match(
+                      query.Index('user_by_email'),
+                      query.Casefold(session.user.email)
+                    )
                   )
                 )
               ),
-              query.Create(
-                query.Collection('users'),
-                { data: { email } }
-              ),
-              query.Get(
+              query.Match(
+                query.Index('susbcription_by_status'), 'active'
+              )
+            ])
+          )
+        )
+
+        console.log(activeSubscription);
+        
+        return {
+          ...session,
+          activeSubscription
+
+        }
+
+      } catch {
+        return {
+          ...session,
+          activeSubscription: null
+        }
+      }
+
+    },
+
+    async signIn(user, account, profile) {
+
+      const { email } = user;
+
+      try {
+        await fauna.query(
+          query.If(
+            query.Not(
+              query.Exists(
                 query.Match(
                   query.Index('user_by_email'),
                   query.Casefold(user.email)
                 )
               )
+            ),
+            query.Create(
+              query.Collection('users'),
+              { data: { email } }
+            ),
+            query.Get(
+              query.Match(
+                query.Index('user_by_email'),
+                query.Casefold(user.email)
+              )
             )
           )
+        )
 
-          return true;
-        } catch {
-          return false;
-        }
+        return true;
+      } catch {
+        return false;
       }
     }
-  })
+  }
+})
